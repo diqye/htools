@@ -1,17 +1,23 @@
 module Module.Log where
 
 import System.IO
--- import Text.Printf(printf,hPrintf)
 import Control.Monad.IO.Class(liftIO,MonadIO)
 import Data.Time.Format
 import Data.Monoid((<>))
 import qualified Data.Time as Time
+import System.IO
 
 data LogLevel = LogErr | LogInfo | LogTrace
 
+-- China standard time
+cstZone = Time.TimeZone {Time.timeZoneMinutes=480,Time.timeZoneSummerOnly=False,Time.timeZoneName="CST"}
+
+stdBuffer = do
+  hSetBuffering stdout LineBuffering
+  hSetBuffering stderr LineBuffering
+
 hInfo :: (MonadIO m) => Handle -> LogLevel -> String -> m ()
 hInfo handle level str = liftIO $ do
-  let cstZone = Time.TimeZone {Time.timeZoneMinutes=480,Time.timeZoneSummerOnly=False,Time.timeZoneName="CST"}
   utc <- Time.getCurrentTime
   let zone = cstZone
   let time = Time.utcToLocalTime zone utc
