@@ -8,6 +8,7 @@ import Control.Concurrent.MVar
 import Control.Concurrent
 import Control.Monad(guard,when,unless,forever)
 import Control.Monad.IO.Class(liftIO)
+import Data.List((\\))
 import Data.String.Conversions(cs)
 import Control.Monad.Trans.Maybe(runMaybeT)
 
@@ -36,14 +37,14 @@ newMonitHttp manager await request name parsec action = do
             Right list -> runMaybeT $ do
               guard $ not $ null list
               isEmptyMVar' <- liftIO $ isEmptyMVar mvar
+              let idList = map fst list
               when isEmptyMVar' $ do
-                let (id,_) = head $ list 
-                liftIO $ putMVar mvar id
+                liftIO $ putMVar mvar idList
                 guard True
-              lastId <- liftIO $ swapMVar mvar $ fst $ head $ list
-              let newList = takeWhile ((/= lastId) . fst) list
-              guard $ not $ null newList
-              liftIO $ action $ fmap (const newList) parsecR
+              lastIdList <- liftIO $ swapMVar mvar idList
+              let newIdList = idList \\ lastIdList
+              guard $ not $ null newIdList
+              liftIO $ action $ fmap (const (filter (byId newIdList) list)) parsecR
             Left _ ->  do
               a <- action parsecR
               pure $ Just a
@@ -56,6 +57,7 @@ newMonitHttp manager await request name parsec action = do
               monitHttp mvar
             (Just MonitEnd) -> pure ()
             (Just MontiSleep) -> forever $ threadDelay (10000*oneSec)
+        byId idList (id,a) = not $ null $ filter (==id) idList
               
 debugParsec :: HTTP.Manager -> P.Parsec String () [(String,a)] -> HTTP.Request -> IO (Either P.ParseError [(String,a)])
 debugParsec manager parsec request = do
