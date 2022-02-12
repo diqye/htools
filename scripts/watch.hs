@@ -12,8 +12,7 @@ main = do
   manager <- HTTPS.newTlsManager
   let monit = Monitor.newMonitHttp manager 30 "http://www.scavc.edu.cn/zsjy1/zsw1/gg.htm" "四川航天职业学院-招生"
   let monitgg = Monitor.newMonitHttp manager 30 "http://www.scavc.com/xwzx/tzgg.htm" "四川航天职业学院-公告"
-  forkIO $ monit (plist "http://www.scavc.edu.cn/zsjy1/zsw1/") action
-  Log.info "Watching is started"
+  -- forkIO $ monit (plist "http://www.scavc.edu.cn/zsjy1/zsw1/") action
   monitgg (plist "http://www.scavc.com/xwzx/") action
   where ggList (a,(b,c)) = 
           b ++ "\n" ++ a
@@ -22,7 +21,6 @@ main = do
           Sender.sendMeTime $ show err
           pure Monitor.MontiSleep
         action (Right list) = do
-          Log.trace $ show list
           Sender.sendMeTime $ unlines $ map ggList list
           pure Monitor.MonitContinue
 

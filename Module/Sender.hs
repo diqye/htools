@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings,CPP #-}
 module Module.Sender where
 
+import qualified Module.Log as Log
 import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Client.TLS as HTTPS
 import qualified Data.Aeson as A
@@ -11,7 +12,9 @@ import Control.Concurrent(forkIO)
 sendMeTime = sendMe "CNiZ0sAGEiJBRFhRVE5JNzVRWEFFWEJISTNTRDRNVUpRQlBQWFpZUkVJIgQIARAC.SHAcPOvTWS4Ir8s8XVo8xA_X9qJx8nVmxsYJJlIoWsk"
 sendMeXAU = sendMe "COzY1sAGEiJBRFhRVE5JNzVRWEFFWEJISTNTRDRNVUpRQlBQWFpZUkVJIgsIAhoHQlhBVVVTRA.Fe-RFWE0NvyYEb7ZeTti8ZtZu95JNdpFVh9vLRtfqx0"
 sendMeBTC = sendMe "CKzg1sAGEiJBRFhRVE5JNzVRWEFFWEJISTNTRDRNVUpRQlBQWFpZUkVJIgsIAhoHQkJUQ1VTRA.68bZiLLMmbCjwX1NdBHInZmq0JcSf6s6jRE6kL8gdcI"
-sendMe token text = do
+-- | Send up to 500 characters to my phone
+sendMe token text' = do
+  let text = take 500 text'
 -- #ifdef darwin_HOST_OS
 --   forkIO $ do
 --     SP.callCommand $ printf "osascript -e \"set Volume 1.5\""
@@ -31,5 +34,5 @@ sendMe token text = do
           }
     manager <- HTTP.newManager HTTPS.tlsManagerSettings
     result <- pure HTTP.responseBody <*> HTTP.httpLbs req manager
-    putStrLn $ printf "sendToMe::%s -> %s" text (cs result :: String)
+    Log.trace $ printf "sendToMe::%s -> %s" text (cs result :: String)
   pure ()

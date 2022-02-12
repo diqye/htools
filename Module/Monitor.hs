@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings,CPP #-}
 module Module.Monitor where
+import qualified Module.Log as Log
 import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Client.TLS as HTTPS
 import qualified Text.Parsec as P
@@ -26,6 +27,7 @@ newMonitHttp :: HTTP.Manager
   -> IO ()
 newMonitHttp manager await request name parsec action = do
   mvar <- newEmptyMVar 
+  Log.info $ name ++ " watching is stared"
   monitHttp mvar
   where monitHttp mvar = do
           text <- HTTP.responseBody <$> HTTP.httpLbs request manager
@@ -41,7 +43,7 @@ newMonitHttp manager await request name parsec action = do
               lastId <- liftIO $ swapMVar mvar $ fst $ head $ list
               let newList = takeWhile ((/= lastId) . fst) list
               guard $ not $ null newList
-              liftIO $ action parsecR
+              liftIO $ action $ fmap (const newList) parsecR
             Left _ ->  do
               a <- action parsecR
               pure $ Just a
