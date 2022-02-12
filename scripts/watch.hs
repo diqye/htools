@@ -10,9 +10,9 @@ import Control.Concurrent(forkIO)
 main = do
   Log.stdBuffer
   manager <- HTTPS.newTlsManager
-  let monit = Monitor.newMonitHttp manager 30 "http://www.scavc.edu.cn/zsjy1/zsw1/gg.htm" "四川航天职业学院-招生"
-  let monitgg = Monitor.newMonitHttp manager 30 "http://www.scavc.com/xwzx/tzgg.htm" "四川航天职业学院-公告"
-  -- forkIO $ monit (plist "http://www.scavc.edu.cn/zsjy1/zsw1/") action
+  let monit = Monitor.newMonitHttp manager 30 "http://www.scavc.edu.cn/zsjy1/zsw1/gg.htm" "scavc-admissions-announcement"
+  let monitgg = Monitor.newMonitHttp manager 30 "http://www.scavc.com/xwzx/tzgg.htm" "scav-announcement"
+  forkIO $ monit (plist "http://www.scavc.edu.cn/zsjy1/zsw1/") action
   monitgg (plist "http://www.scavc.com/xwzx/") action
   where ggList (a,(b,c)) = 
           b ++ "\n" ++ a
