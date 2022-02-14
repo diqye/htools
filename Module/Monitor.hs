@@ -14,7 +14,7 @@ import Control.Monad.Trans.Maybe(runMaybeT)
 
 oneSec = fromEnum 1e6 :: Int
 
-data MonitControl = MonitContinue | MontiSleep | MonitEnd
+data MonitControl = MonitContinue | MontiSleep | MonitEnd deriving Show
 -- | For example; 60s
 -- let manager <- HTTPS.newTlsManager 
 -- let monitHttp = newMonitHttp manager 60 "https://google.com" "exampel"
@@ -55,8 +55,12 @@ newMonitHttp manager await request name parsec action = do
             (Just MonitContinue) -> do
               threadDelay (await * oneSec)
               monitHttp mvar
-            (Just MonitEnd) -> pure ()
-            (Just MontiSleep) -> forever $ threadDelay (10000*oneSec)
+            (Just MonitEnd) -> do
+              Log.info $ name ++ " ended"
+              pure ()
+            (Just MontiSleep) ->do
+              Log.info $ name ++ " sleeped"
+              forever $ threadDelay (10000*oneSec)
         byId idList (id,a) = not $ null $ filter (==id) idList
               
 debugParsec :: HTTP.Manager -> P.Parsec String () [(String,a)] -> HTTP.Request -> IO (Either P.ParseError [(String,a)])
