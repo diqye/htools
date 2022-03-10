@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell,OverloadedStrings,DeriveLift #-}
+{-# LANGUAGE TemplateHaskell,OverloadedStrings,DeriveDataTypeable #-}
 module Module.Log where
 
 import System.IO
@@ -9,10 +9,11 @@ import qualified Data.Time as Time
 import Language.Haskell.TH
 import System.IO
 import Debug.Trace(traceM)
-import Language.Haskell.TH.Syntax(lift,Lift,liftString)
+import Data.Data(Data)
+import Language.Haskell.TH.Syntax(liftData,liftString)
 
 data LogLevel = LogErr | LogInfo | LogTrace
-  deriving (Show,Lift)
+  deriving (Show,Data)
 
 -- China standard time
 cstZone = Time.TimeZone {Time.timeZoneMinutes=480,Time.timeZoneSummerOnly=False,Time.timeZoneName="CST"}
@@ -21,7 +22,7 @@ stdBuffer = do
   hSetBuffering stdout LineBuffering
   hSetBuffering stderr LineBuffering
 
-hInfo :: (MonadIO m) => Maybe String -> LogLevel -> String -> m ()
+hInfo :: (MonadIO m) => Maybe Loc -> LogLevel -> String -> m ()
 hInfo loc level str = liftIO $ do
   utc <- Time.getCurrentTime
   let zone = cstZone
@@ -30,9 +31,9 @@ hInfo loc level str = liftIO $ do
         LogErr -> ("err",stdout)
         LogTrace -> ("trace",stdout)
         LogInfo -> ("info",stderr)
-  hPutStrLn handle $ (prefn loc prefix <> formatTime defaultTimeLocale ("%Y-%m-%d %H:%M:%S> ") time <> str)
-  where prefn Nothing prefix = prefix <> " "
-        prefn (Just loc) prefix = prefix <> " " <> loc
+  hPutStrLn handle $ (prefn loc prefix (formatTime defaultTimeLocale ("[%Y-%m-%d %H:%M:%S]") time) <> str)
+  where prefn Nothing prefix time = "[" <> prefix <> "]" <> time
+        prefn (Just (Loc{loc_module=mod,loc_start=start})) prefix time = "[" <> prefix <> "]"<>time<>"[" <> mod <> show start <> "]"
 
 info :: (MonadIO m) => String -> m ()
 info = hInfo Nothing LogInfo
@@ -49,12 +50,11 @@ hInfo' logLevel = do
   loc <- location
   let locStr = concat [loc_module loc,show $ loc_start loc]
   let hInfoName = mkName "hInfo"
-  let justName = mkName "Just"
-  logLevelExp <- lift logLevel
-  locStrExp <- liftString locStr
+  logLevelExp <- liftData logLevel
+  loc <- liftData $ Just loc
   -- pure $ AppE (AppE (VarE hInfo) (VarE handle)) (VarE logLevel)
   pure $ var hInfoName
-    <-> (con justName <-> locStrExp)
+    <-> loc
     <-> logLevelExp
   where var = VarE
         con = ConE
