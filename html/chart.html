@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
+  <title>Document</title>
+  <style>
+    canvas {
+      cursor: none;
+    }
+  </style>
+</head>
+<body>
+  <div style="width: 1000px;height: 500px;">
+    <canvas id="myChart" width="2" height="1"></canvas>
+    <div id="log"></div>
+  </div>
+  <script>
+    function data(){
+      return [
+        1.91,
+        2,
+        null,
+        1,
+        1.63,
+        -0.35,
+        -0.19,
+        -0.29,
+        -0.61,
+        1.03,
+        -1.41,
+        -3.12,
+        0.24,
+        -1.37,
+        0.29,
+        0.24,
+        0.24,
+        0.24,
+        0.24,
+        0.24,
+        0.24,
+        0.24,
+        0.24,
+        0.24,
+        0.24,
+        -1.37,
+        0.29,
+        -1.37,
+        0.29,
+        -1.37,
+        0.29,
+        -1.37,
+        0.29,
+        0.24,
+        0.24,
+        0.24,
+        -1.37,
+        0.29,
+        -1.37,
+        0.29,
+        -1.37,
+        0.29,
+        -1.37,
+        0.29,
+        -1.37,
+        0.29,
+        -1.37,
+        0.29,
+        -1.37,
+        0.29,
+        -1.37,
+        0.29,
+        -1.37,
+        0.29,
+        1.32
+      ]
+    }
+    // My first plugin
+    let myPlugin = {
+      id: 'myfirstplugin',
+      log(x,y){
+        this.logEl.innerText = `x:${x},y:${y}` 
+      },
+      afterInit(chart){
+        console.log("afterInit",chart)
+        this.logEl = document.getElementById("log")
+        let last = new Date().getTime()
+        chart.canvas.addEventListener("mousemove",e=>{
+          this.offsetX = e.offsetX
+          this.offsetY = e.offsetY
+          let current = new Date().getTime()
+          let diff = current - last
+          if(diff > 100){
+            chart.update()
+            last = current
+          }
+        })
+      },
+      afterDraw(chart,args,options){
+        let ctx = chart.ctx
+        let area = chart.chartArea
+        let r = 11
+        ctx.save()
+        ctx.fillStyle = "#c068"
+        ctx.strokeStyle = "#c06"
+        let y = this.offsetY > area.bottom ? area.bottom : this.offsetY < 0 ? this.offsetY : this.offsetY < area.top ? area.top : this.offsetY
+        ctx.fillRect(area.left,y-0.5,area.width,1)
+        let x = this.offsetX > area.right ? area.right : this.offsetX < 0 ? this.offsetX : this.offsetX < area.left ? area.left : this.offsetX
+        ctx.fillRect(x-0.5,area.top,1,area.height)
+        ctx.moveTo(this.offsetX,this.offsetY)
+        ctx.arc(this.offsetX,this.offsetY,r,0,Math.PI*2)
+        ctx.moveTo(this.offsetX,this.offsetY)
+        ctx.lineTo(this.offsetX-r,this.offsetY)
+        ctx.moveTo(this.offsetX,this.offsetY)
+        ctx.lineTo(this.offsetX,this.offsetY+r)
+        ctx.lineTo(this.offsetX,this.offsetY-r)
+        ctx.stroke()
+        let scales = chart.scales
+        this.log(scales.x.getValueForPixel(x),scales.y.getValueForPixel(y))
+        let yZero = scales.y.getPixelForValue(0)
+        if(yZero < area.bottom){
+          ctx.beginPath()
+          ctx.fillStyle = "#c064"
+          ctx.lineWidth = 4
+          ctx.setLineDash([6,6])
+          ctx.moveTo(area.left,yZero)
+          ctx.lineTo(area.right,yZero)
+          ctx.stroke()
+          ctx.setLineDash([])
+          ctx.closePath()
+        }else{
+          void 0
+        }
+        ctx.restore()
+      }
+    }
+    async function main(){
+      await import("https://cdn.bootcdn.net/ajax/libs/Chart.js/3.7.1/chart.js")
+      const ctx = document.getElementById('myChart').getContext('2d');
+      const myChart = new Chart(ctx, {
+        type: 'line',
+        plugins:[myPlugin],
+        options:{
+          plugins:{
+            tooltip:{
+              enabled: false
+            }
+          },
+          responsive:true,
+          interaction:{
+            intersect: false
+          },
+          scales:{
+            y: {
+              ticks: {
+                callback:(label,index,labels)=>{
+                  return label>0 ?  "+" + label + "%" : label + "%"
+                }
+              }
+            },
+            x: {
+              type: "linear",
+              min : 0,
+              max: 1000,
+              ticks: {
+                // stepSize: 1
+                callback(label,index,labels) {
+                  return label
+                  return new Date(label).toLocaleDateString()
+                  return [ "Monday"
+                  , "Tuesday"
+                  , "Wednesday"
+                  , "Thursday"
+                  , "Friday"
+                  , "Saturday"
+                  , "Sunday"
+                  ][index%7]
+                }
+              }
+            }
+          }
+        },
+        data: {
+          // labels: new Array(100).fill(1).map((_,i)=>i+"H"),
+          datasets: [{
+            label: 'My First Dataset',
+            borderColor: "rgb(255,0,0)",
+            // backgroundColor: "rgb(255,0,0)",
+            backgroundColor : ctx => {
+              if(ctx.parsed&&ctx.parsed.x < 25){
+                return "red"
+              }else{
+                return "blue"
+              }
+            },
+            data: [{
+              x: 1,
+              y: 5,
+            },{
+              x: 2,
+              y: 0
+            },{x:20,y:-1},{x:500,y:1}],
+            segment:{
+              borderColor: (ctx) => {
+                if(ctx.p0.parsed.x < 25) return "red"
+                else return "blue"
+                
+              },
+              borderDash: ctx => ctx.p1.skip ? [6,6] : undefined
+            },
+            tension: 0.4,
+            // spanGaps: true
+          }]
+        }
+      });
+      window.myChart = myChart
+    }
+
+    main()
+  </script>
+</body>
+</html>
