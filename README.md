@@ -1,12 +1,12 @@
 # htools
-tools in haskell
+My Haskell tools
 
 ## Log
 Source: Module/Log.hs
 ```haskell
 {-# LANGUAGE TemplateHaskell,OverloadedStrings #-}
 module Module.Test where 
-import Module.Log(hInfo) -- required for Template syntax
+import Module.Log(hInfo) -- required 
 import qualified Module.Log as G
 testLog' = do
   $(G.err') "I am an $(err')"
@@ -17,7 +17,7 @@ testLog' = do
   G.trace "I am a trace'"
   putStrLn "Done"
 ```
-You will get output
+You will see the output bellow
 ```bash
 err Module.Test(6,5)2022-03-09 03:16:07> I am an $(err')
 info Module.Test(7,5)2022-03-09 03:16:07> I am an $(info')
@@ -27,7 +27,7 @@ info 2022-03-09 03:16:07> I am an info
 trace 2022-03-09 03:16:07> I am a trace'
 Done
 ```
-Or use simple syntax
+Another way to express this
 ```haskell
 {-#LANGUAGE TemplateHaskell#-}
 import Module.Log(hInfo,err,err') 
@@ -43,7 +43,7 @@ data Foo t = Foo {a::Int,b::String,c::t} | Foo2 {d::Int} deriving(Show)
 
 mkSetAndOver ''Foo
 
--- You will get
+-- You will get those method
 set_a,set_b,set_c,set_d
 over_a,over_b,over_c,over_d
 set_a :: Int -> Foo t -> Foo t
